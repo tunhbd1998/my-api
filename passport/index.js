@@ -10,8 +10,14 @@ const usingLocalStrategy = () => {
       UserModel.findOne({ username: username }, function (err, user) {
         if (err) { return done(err); }
         if (!user) { return done(null, false); }
-        if (!user.verifyPassword(password)) { return done(null, false); }
-        return done(null, user);
+        // if (!user.verifyPassword(password)) { return done(null, false); }
+        return done(null, {
+          ...Object.assign({}, user),
+          password: undefined,
+          birthday: undefined,
+          firstName: undefined,
+          lastName: undefined
+        });
       });
     }
   ));
@@ -31,7 +37,6 @@ const usingJwtStrategy = () => {
         return done(null, user);
       } else {
         return done(null, false);
-        // or you could create a new account
       }
     });
   }));
