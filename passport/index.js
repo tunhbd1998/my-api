@@ -2,52 +2,66 @@ const expressSession = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const JwtStrategy = require('passport-jwt').Strategy;
-const { UserModel } = require('../database');
+const ExtractJwt = require('passport-jwt').ExtractJwt;
+const { userModel } = require('../database');
 
 const usingLocalStrategy = () => {
   passport.use(new LocalStrategy(
     function (username, password, done) {
-      UserModel.findOne({ username: username }, function (err, user) {
-        if (err) { return done(err); }
-        if (!user) { return done(null, false); }
-        // if (!user.verifyPassword(password)) { return done(null, false); }
-        return done(null, {
-          ...Object.assign({}, user),
-          password: undefined,
-          birthday: undefined,
-          firstName: undefined,
-          lastName: undefined
+      userModel
+        .findOne({ username: username })
+        .then(res => {
+          if (res.err) {
+            return done(res.err);
+          }
+          if (res.data) {
+            return done(null, {
+              ...Object.assign({}, res.data),
+              password: undefined,
+              birthday: undefined,
+              firstName: undefined,
+              lastName: undefined
+            });
+          }
+
+          return done(null, false);
+        })
+        .catch(err => {
+          return done(err);
         });
-      });
     }
   ));
 }
 
 const usingJwtStrategy = () => {
   const opts = {
-    secretOrKey: 'secret'
+    secretOrKey: 'NguyenHuuTu-1612772',
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
   };
 
   passport.use(new JwtStrategy(opts, function (jwt_payload, done) {
-    UserModel.findOne({ username: jwt_payload.username }, function (err, user) {
-      if (err) {
-        return done(err, false);
-      }
-      if (user) {
-        return done(null, user);
-      } else {
+    userModel
+      .findOne({ username: jwt_payload.username })
+      .then(res => {
+        if (res.err) {
+          return done(err, false);
+        }
+
+        if (res.data) {
+          return done(null, res.data);
+        }
+
         return done(null, false);
-      }
-    });
+      });
   }));
 }
 
 module.exports = app => {
-  app.use(expressSession({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
+  app.use(expressSession({ secret: 'NguyenHuuTu-1612772', resave: true, saveUninitialized: true }));
   app.use(passport.initialize());
   app.use(passport.session());
 
   usingLocalStrategy();
-
+  usingJwtStrategy();
 }
 
