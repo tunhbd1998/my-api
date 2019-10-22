@@ -1,45 +1,54 @@
 const passport = require('passport');
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
+const { JWT } = require('../config');
 const { userModel } = require('../database');
 
-/* GET users listing. */
-router.post(
-  '/login',
-  passport.authenticate('local', { session: false }),
-  (req, res) => {
-    console.log('userrrr', req.user);
-    req.user
-      ? res.json({
-        token: jwt.sign(req.user, 'NguyenHuuTu-1612772')
-      })
-      : res.json({
+router.post('/login', function (req, res, next) {
+  passport.authenticate('local', { session: false }, function (err, user, info) {
+    if (err) {
+      return next(err);
+    }
+
+    if (!user) {
+      return res.status(200).json({
         token: null
       })
-  }
-);
+    }
+
+    req.logIn(user, { session: false }, function (err) {
+      if (err) {
+        return next(err);
+      }
+
+      return res.status(200).json({
+        token: jwt.sign(user, JWT.SECRET)
+      });
+    });
+  })(req, res, next);
+});
 
 router.post(
   '/register',
   (req, res) => {
     console.log(req.body);
     userModel
-    .addNew(req.body)
-    .then(ret => {
-      if (ret.err) {
-        res.status(400).json({
-          success: false,
-          message: 'Process failed'
-        });
-      }
-      else {
-        res.status(200).json({ success: true, message: 'Register Successfully' });
-      }
-    })
-    .catch(err => res.status(500).json({
-      success: false,
-      message: 'Server error'
-    }));
+      .addNew(req.body)
+      .then(ret => {
+        if (ret.err) {
+          res.status(400).json({
+            success: false,
+            message: 'Process failed'
+          });
+        }
+        else {
+          res.status(200).json({ success: true, message: 'Register Successfully' });
+        }
+      })
+      .catch(err => res.status(500).json({
+        success: false,
+        message: 'Server error'
+      }));
   }
 );
 
@@ -52,5 +61,25 @@ router.get(
     });
   }
 );
+
+router.get(
+  '/check-authorizated',
+  (req, res) => {
+    const authorization = req.headers.authorization || null;
+
+    if (!authorization) {
+      res.status(200).json({
+        authorizated: false
+      });
+    }
+
+    const token = authorization.split(' ')[1];
+    const user = jwt.verify(token, JWT.SECRET);
+
+    res.status(200).json({
+      authorizated: user ? true : false
+    });
+  }
+)
 
 module.exports = router;

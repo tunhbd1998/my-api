@@ -1,12 +1,13 @@
+const { DATABASE } = require('../config');
 const knex = require('knex');
 
 const connectionConfig = {
-    client: 'mysql',
+    client: DATABASE.CLIENT,
     connection: {
-        host: 'remotemysql.com',
-        user: '6gGmOx0ZoP',
-        password: 'aLHFl9gKdj',
-        database: '6gGmOx0ZoP'
+        host: DATABASE.HOST,
+        user: DATABASE.USER,
+        password: DATABASE.PASS,
+        database: DATABASE.DATABASE_NAME
     }
 }
 

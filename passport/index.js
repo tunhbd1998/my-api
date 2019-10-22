@@ -3,14 +3,17 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
+const { JWT } = require('../config');
+const { hashPassword } = require('../utils/password');
 const { userModel } = require('../database');
 
 const usingLocalStrategy = () => {
   passport.use(new LocalStrategy(
     function (username, password, done) {
       userModel
-        .findOne({ username: username })
+        .findOne({ username, password: hashPassword(password) })
         .then(res => {
+          console.log('res', res);
           if (res.err) {
             return done(res.err);
           }
@@ -24,7 +27,7 @@ const usingLocalStrategy = () => {
             });
           }
 
-          return done(null, false);
+          return done(null, null);
         })
         .catch(err => {
           return done(err);
@@ -35,7 +38,7 @@ const usingLocalStrategy = () => {
 
 const usingJwtStrategy = () => {
   const opts = {
-    secretOrKey: 'NguyenHuuTu-1612772',
+    secretOrKey: JWT.SECRET,
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
   };
 
@@ -48,7 +51,10 @@ const usingJwtStrategy = () => {
         }
 
         if (res.data) {
-          return done(null, res.data);
+          return done(null, {
+            ...res.data,
+            password: undefined
+          });
         }
 
         return done(null, false);
@@ -57,9 +63,9 @@ const usingJwtStrategy = () => {
 }
 
 module.exports = app => {
-  app.use(expressSession({ secret: 'NguyenHuuTu-1612772', resave: true, saveUninitialized: true }));
+  // app.use(expressSession({ secret: 'NguyenHuuTu-1612772', resave: true, saveUninitialized: true }));
   app.use(passport.initialize());
-  app.use(passport.session());
+  // app.use(passport.session());
 
   usingLocalStrategy();
   usingJwtStrategy();

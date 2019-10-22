@@ -1,3 +1,4 @@
+const { hashPassword } = require('../utils/password');
 const conn = require('./connection');
 
 const findOne = async conditions => {
@@ -19,10 +20,14 @@ const addNew = async dataObj => {
     const result = {
         err: null,
         data: null
-    }
+    };
+    const newData = {
+        ...dataObj,
+        password: hashPassword(dataObj.password)
+    };
 
     await conn('user')
-        .insert(dataObj)
+        .insert(newData)
         .then(res => result.err = null)
         .catch(err => result.err = err);
 
