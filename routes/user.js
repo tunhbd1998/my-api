@@ -74,12 +74,13 @@ router.get(
     }
 
     const token = authorization.split(' ')[1];
+    let user = null;
     try {
-      const user = jwt.verify(token, JWT.SECRET);
+      user = jwt.verify(token, JWT.SECRET);
     } catch (err) {
       //
     }
-    
+
     res.status(200).json({
       authorizated: user ? true : false
     });
