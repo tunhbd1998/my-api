@@ -65,20 +65,22 @@ router.get(
 router.get(
   '/check-authorizated',
   (req, res) => {
-    const authorization = req.headers.authorization || null;
+    try {
+      const authorization = req.headers.authorization || null;
 
-    if (!authorization) {
+      if (!authorization) {
+        res.status(200).json({
+          authorizated: false
+        });
+      }
+
+      const token = authorization.split(' ')[1];
+      const user = jwt.verify(token, JWT.SECRET);
+
       res.status(200).json({
-        authorizated: false
+        authorizated: user ? true : false
       });
-    }
-
-    const token = authorization.split(' ')[1];
-    const user = jwt.verify(token, JWT.SECRET);
-
-    res.status(200).json({
-      authorizated: user ? true : false
-    });
+    } catch (err) { console.log('err', err) };
   }
 )
 
